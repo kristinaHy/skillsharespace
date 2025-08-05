@@ -1,0 +1,18 @@
+{% extends 'qa/base.html' %}
+{% block title %}Moderator Dashboard{% endblock %}
+{% block content %}
+<h2>Flagged Content</h2>
+{% for flag in flags %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Flagged {{ flag.content_type }} #{{ flag.object_id }}</strong></p>
+            <p>Reason: {{ flag.reason }}</p>
+            <p>Created at: {{ flag.created_at }}</p>
+            <a href="{% url 'approve-content' flag.content_type flag.object_id %}" class="btn btn-sm btn-success">Approve</a>
+            <a href="{% url 'dismiss-flag' flag.pk %}" class="btn btn-sm btn-secondary">Dismiss</a>
+        </div>
+    </div>
+{% empty %}
+    <p>No flagged content pending review.</p>
+{% endfor %}
+{% endblock %}

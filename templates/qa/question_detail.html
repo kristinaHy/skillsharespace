@@ -1,0 +1,34 @@
+{% extends 'qa/base.html' %}
+{% block title %}{{ question.title }}{% endblock %}
+{% block content %}
+<h2>{{ question.title }}</h2>
+<p class="text-muted">Asked by {{ question.author }} on {{ question.created_at|date:"M d, Y H:i" }} • {{ question.views }} views</p>
+<p>{{ question.body }}</p>
+
+{% if user == question.author %}
+    <a href="{% url 'question-edit' question.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+    <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+{% endif %}
+
+<hr>
+<h4>Answers</h4>
+{% for answer in question.answers.all %}
+    {% if answer.approved %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p>{{ answer.body }}</p>
+            <small class="text-muted">By {{ answer.author }} on {{ answer.created_at|date:"M d, Y H:i" }}</small>
+        </div>
+    </div>
+    {% endif %}
+{% empty %}
+    <p>No answers yet.</p>
+{% endfor %}
+
+{% if user.is_authenticated %}
+    <hr>
+    <a href="{% url 'answer-create' question.pk %}" class="btn btn-outline-success">Add Answer</a>
+{% else %}
+    <p><a href="{% url 'login' %}">Login</a> to post an answer.</p>
+{% endif %}
+{% endblock %}
