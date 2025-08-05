@@ -5,6 +5,8 @@ from django.urls import reverse_lazy
 from .models import Question, Answer, Flag
 from .forms import QuestionForm, AnswerForm
 from django.db.models import Q
+from django.contrib.auth.forms import UserCreationForm
+
 
 class QuestionListView(ListView):
     model = Question
@@ -88,3 +90,8 @@ def dismiss_flag(request, flag_id):
     flag.resolved = True
     flag.save()
     return redirect('mod-dashboard')
+
+class SignUpView(CreateView):
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login') 
+    template_name = 'registration/signup.html'
