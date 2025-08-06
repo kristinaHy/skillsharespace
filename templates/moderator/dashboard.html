@@ -1,0 +1,46 @@
+{% extends "qa/base.html" %}
+{% block title %}Moderator Dashboard{% endblock %}
+
+{% block content %}
+<h2>Moderator Dashboard</h2>
+
+<h3>Unapproved Questions</h3>
+<ul>
+    {% for question in unapproved_questions %}
+    <li>
+        <a href="{% url 'question-detail' question.pk %}">{{ question.title }}</a>
+        — by {{ question.author }}
+        <a href="{% url 'approve-question' question.pk %}">Approve</a>
+    </li>
+    {% empty %}
+    <li>No unapproved questions.</li>
+    {% endfor %}
+</ul>
+
+<h3>Unapproved Answers</h3>
+<ul>
+    {% for answer in unapproved_answers %}
+    <li>
+        On: <a href="{% url 'question-detail' answer.question.pk %}">{{ answer.question.title }}</a> <br>
+        "{{ answer.body|truncatewords:10 }}" — by {{ answer.author }}
+        <a href="{% url 'approve-answer' answer.pk %}">Approve</a>
+    </li>
+    {% empty %}
+    <li>No unapproved answers.</li>
+    {% endfor %}
+</ul>
+
+<h3>Flagged Content</h3>
+<ul>
+    {% for flag in unresolved_flags %}
+    <li>
+        Flagged {{ flag.content_type }} ID: {{ flag.object_id }} <br>
+        Reason: {{ flag.reason }} <br>
+        <a href="{% url 'approve-content' flag.content_type flag.object_id %}">Approve</a> |
+        <a href="{% url 'dismiss-flag' flag.pk %}">Dismiss</a>
+    </li>
+    {% empty %}
+    <li>No unresolved flags.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

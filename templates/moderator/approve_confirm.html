@@ -1,0 +1,12 @@
+{% extends "qa/base.html" %}
+{% block title %}Approve Content{% endblock %}
+
+{% block content %}
+<h2>Approve this item?</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, Approve</button>
+    <a href="{% url 'mod-dashboard' %}">Cancel</a>
+</form>
+{% endblock %}

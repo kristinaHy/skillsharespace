@@ -1,7 +1,8 @@
 {% extends 'qa/base.html' %}
 {% block title %}Ask Question{% endblock %}
 {% block content %}
-<h2>{% if form.instance.pk %}Edit{% else %}New{% endif %} {{ form._meta.model.__name__ }}</h2>
+<h2>{% if form.instance.pk %}Edit{% else %}New{% endif %} {{ model_name }}</h2>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

@@ -1,0 +1,26 @@
+{% extends "qa/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Unapproved Questions</h2>
+    <ul class="list-group">
+        {% for question in questions %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ question.title }}</strong> by {{ question.author.username }}
+                    <br>
+                    <small>Posted on {{ question.created_at }}</small>
+                </div>
+                <div>
+                    <a href="{% url 'question-detail' question.pk %}" class="btn btn-sm btn-info">View</a>
+                    <a href="{% url 'approve-question' question.pk %}" class="btn btn-sm btn-success">Approve</a>
+                    <a href="{% url 'question-update' question.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </li>
+        {% empty %}
+            <li class="list-group-item">No unapproved questions.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

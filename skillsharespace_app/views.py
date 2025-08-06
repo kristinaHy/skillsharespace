@@ -1,12 +1,14 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from .models import Question, Answer, Flag
 from .forms import QuestionForm, AnswerForm
 from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
 
+
+from django.db.models import Q
 
 class QuestionListView(ListView):
     model = Question
@@ -15,15 +17,64 @@ class QuestionListView(ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('q')
-        qs = Question.objects.filter(approved=True)
+        user = self.request.user
+
+        # Base queryset
+        if user.is_authenticated:
+            if user.is_staff:
+                # Moderator sees all questions
+                qs = Question.objects.all()
+            else:
+                # Regular user sees approved questions + their own questions
+                qs = Question.objects.filter(Q(approved=True) | Q(author=user))
+        else:
+            # Anonymous user sees only approved questions
+            qs = Question.objects.filter(approved=True)
+
         if query:
             qs = qs.filter(Q(title__icontains=query) | Q(body__icontains=query))
+
         return qs.order_by('-created_at')
+
+from django.db.models import Q
+from django.http import Http404
+from .models import Question
 
 class QuestionDetailView(DetailView):
     model = Question
     context_object_name = 'question'
     template_name = 'qa/question_detail.html'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        user = self.request.user
+
+        # Moderators can view all
+        if user.is_authenticated and user.is_staff:
+            return obj
+
+        # Author can view their own unapproved question
+        if obj.approved or (user.is_authenticated and obj.author == user):
+            return obj
+
+        # Otherwise, raise 404
+        raise Http404("This question is not approved.")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        question = self.object
+        user = self.request.user
+
+        # Filter answers similarly
+        if user.is_authenticated and user.is_staff:
+            answers = question.answers.all()
+        elif user.is_authenticated:
+            answers = question.answers.filter(Q(approved=True) | Q(author=user))
+        else:
+            answers = question.answers.filter(approved=True)
+
+        context['answers'] = answers.order_by('created_at')
+        return context
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object()
@@ -31,15 +82,22 @@ class QuestionDetailView(DetailView):
         obj.save()
         return super().get(request, *args, **kwargs)
 
+
 class QuestionCreateView(LoginRequiredMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = 'qa/question_form.html'
+    success_url = reverse_lazy('question-list')
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['model_name'] = self.model.__name__  
+        return context
+    
 class QuestionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Question
     form_class = QuestionForm
@@ -55,7 +113,6 @@ class QuestionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         return self.get_object().author == self.request.user
-
 class AnswerCreateView(LoginRequiredMixin, CreateView):
     model = Answer
     form_class = AnswerForm
@@ -65,6 +122,11 @@ class AnswerCreateView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
         form.instance.question_id = self.kwargs['pk']
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['model_name'] = self.model.__name__  
+        return context
 
 class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Flag
@@ -95,3 +157,93 @@ class SignUpView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy('login') 
     template_name = 'registration/signup.html'
+    
+from django.views.generic import UpdateView
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.shortcuts import redirect
+from django.contrib import messages
+from .models import Question
+
+class ApproveQuestionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Question
+    fields = []  # No form fields, just updating approved status
+    template_name = 'moderator/approve_confirm.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def form_valid(self, form):
+        form.instance.approved = True
+        messages.success(self.request, "Question approved successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return redirect('moderator-unapproved-questions').url
+
+from .models import Answer
+
+class ApproveAnswerView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Answer
+    fields = []
+    template_name = 'moderator/approve_confirm.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def form_valid(self, form):
+        form.instance.approved = True
+        messages.success(self.request, "Answer approved successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return redirect('moderator-unapproved-answers').url
+
+# views.py
+
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from .models import Question, Answer, Flag
+
+class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'moderator/dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['unapproved_questions'] = Question.objects.filter(approved=False)
+        context['unapproved_answers'] = Answer.objects.filter(approved=False)
+        context['unresolved_flags'] = Flag.objects.filter(resolved=False)
+        return context
+
+# views.py (continued)
+
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from .models import Question, Answer
+
+
+class UnapprovedQuestionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Question
+    template_name = 'moderator/unapproved_questions.html'
+    context_object_name = 'questions'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        return Question.objects.filter(approved=False).order_by('-created_at')
+
+
+class UnapprovedAnswerListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Answer
+    template_name = 'moderator/unapproved_answers.html'
+    context_object_name = 'answers'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        return Answer.objects.filter(approved=False).order_by('-created_at')
+
