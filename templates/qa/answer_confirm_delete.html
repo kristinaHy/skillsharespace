@@ -1,0 +1,14 @@
+{% extends 'qa/base.html' %}
+
+{% block title %}Delete Answer{% endblock %}
+
+{% block content %}
+  <h1>Confirm Delete Answer</h1>
+  <p>Are you sure you want to delete this answer?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="{% url 'question-detail' pk=object.question.pk %}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

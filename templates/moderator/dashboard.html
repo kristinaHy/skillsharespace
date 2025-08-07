@@ -5,42 +5,48 @@
 <h2>Moderator Dashboard</h2>
 
 <h3>Unapproved Questions</h3>
-<ul>
+<ul class="list-group mb-4">
     {% for question in unapproved_questions %}
-    <li>
-        <a href="{% url 'question-detail' question.pk %}">{{ question.title }}</a>
-        — by {{ question.author }}
-        <a href="{% url 'approve-question' question.pk %}">Approve</a>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ question.title }}</strong> by {{ question.author.username }}
+            <br>
+            <small>Posted on {{ question.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+        <div>
+            <a href="{% url 'question-detail' question.pk %}" class="btn btn-sm btn-info">View</a>
+            <a href="{% url 'approve-question' question.pk %}" class="btn btn-sm btn-success">Approve</a>
+            <a href="{% url 'unapprove-question' question.pk %}" class="btn btn-sm btn-warning">Unapprove</a>
+            <a href="{% url 'moderator-question-edit' question.pk %}" class="btn btn-sm btn-primary">Edit</a>
+            <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-danger">Delete</a>
+            
+        </div>
     </li>
     {% empty %}
-    <li>No unapproved questions.</li>
+    <li class="list-group-item">No unapproved questions.</li>
     {% endfor %}
 </ul>
 
 <h3>Unapproved Answers</h3>
-<ul>
+<ul class="list-group">
     {% for answer in unapproved_answers %}
-    <li>
-        On: <a href="{% url 'question-detail' answer.question.pk %}">{{ answer.question.title }}</a> <br>
-        "{{ answer.body|truncatewords:10 }}" — by {{ answer.author }}
-        <a href="{% url 'approve-answer' answer.pk %}">Approve</a>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            On question: <a href="{% url 'question-detail' answer.question.pk %}">{{ answer.question.title }}</a><br>
+            "{{ answer.body|truncatewords:15 }}" — by {{ answer.author.username }}<br>
+            <small>Posted on {{ answer.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+        <div>
+            <a href="{% url 'approve-answer' answer.pk %}" class="btn btn-sm btn-success">Approve</a>
+            <a href="{% url 'unapprove-answer' answer.pk %}" class="btn btn-sm btn-warning">Unapprove</a>
+            <a href="{% url 'moderator-answer-edit' answer.pk %}" class="btn btn-sm btn-primary">Edit</a>
+            
+            <a href="{% url 'moderator-answer-delete' answer.pk %}" class="btn btn-sm btn-danger">Delete</a>
+        </div>
     </li>
     {% empty %}
-    <li>No unapproved answers.</li>
+    <li class="list-group-item">No unapproved answers.</li>
     {% endfor %}
 </ul>
 
-<h3>Flagged Content</h3>
-<ul>
-    {% for flag in unresolved_flags %}
-    <li>
-        Flagged {{ flag.content_type }} ID: {{ flag.object_id }} <br>
-        Reason: {{ flag.reason }} <br>
-        <a href="{% url 'approve-content' flag.content_type flag.object_id %}">Approve</a> |
-        <a href="{% url 'dismiss-flag' flag.pk %}">Dismiss</a>
-    </li>
-    {% empty %}
-    <li>No unresolved flags.</li>
-    {% endfor %}
-</ul>
 {% endblock %}

@@ -6,7 +6,7 @@
 <p>{{ question.body }}</p>
 
 {% if user == question.author %}
-    <a href="{% url 'question-edit' question.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+    <a href="{% url 'question-update' question.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
     <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
 {% endif %}
 

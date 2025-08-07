@@ -29,16 +29,22 @@ class Answer(models.Model):
     def get_absolute_url(self):
         return reverse('question-detail', kwargs={'pk': self.pk})
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+
 class Flag(models.Model):
     CONTENT_CHOICES = [
         ('question', 'Question'),
         ('answer', 'Answer'),
     ]
-    content_type = models.CharField(max_length=10, choices=CONTENT_CHOICES)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     reason = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     resolved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'Flag on {self.content_type} #{self.object_id}'
+        return f"Flag on {self.content_object}"
+

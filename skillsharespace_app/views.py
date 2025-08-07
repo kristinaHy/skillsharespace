@@ -121,12 +121,16 @@ class AnswerCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.question_id = self.kwargs['pk']
+        form.instance.approved = False  # mark unapproved initially
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['model_name'] = self.model.__name__  
+        context['model_name'] = self.model.__name__
         return context
+
+    def get_success_url(self):
+        return reverse_lazy('question-detail', kwargs={'pk': self.kwargs['pk']})
 
 class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Flag
@@ -197,6 +201,58 @@ class ApproveAnswerView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_success_url(self):
         return redirect('moderator-unapproved-answers').url
+
+
+class UnapproveQuestionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Question
+    fields = []
+    template_name = 'moderator/confirm_unapprove.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def form_valid(self, form):
+        form.instance.approved = False
+        messages.success(self.request, "Question marked as unapproved.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('mod-dashboard')
+
+
+class UnapproveAnswerView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Answer
+    fields = []
+    template_name = 'moderator/confirm_unapprove.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def form_valid(self, form):
+        form.instance.approved = False
+        messages.success(self.request, "Answer marked as unapproved.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('mod-dashboard')
+
+
+class AnswerUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Answer
+    form_class = AnswerForm
+    template_name = 'qa/answer_form.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.get_object().author == self.request.user
+
+
+class AnswerDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Answer
+    template_name = 'qa/answer_confirm_delete.html'
+    success_url = reverse_lazy('mod-dashboard')
+
+    def test_func(self):
+        return self.request.user.is_staff or self.get_object().author == self.request.user
 
 # views.py
 
