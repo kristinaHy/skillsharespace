@@ -9,7 +9,7 @@ urlpatterns = [
     path('question/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question-delete'),
     path('question/<int:pk>/answer/', views.AnswerCreateView.as_view(), name='answer-create'),
     path('answer/<int:pk>/update/', views.AnswerUpdateView.as_view(), name='answer-update'),
-    path('answer/<int:pk>/update/', views.AnswerDeleteView.as_view(), name='answer-delete'),
+    path('answer/<int:pk>/delete/', views.AnswerDeleteView.as_view(), name='answer-delete'),
 
 
     path('moderator/', views.ModeratorDashboardView.as_view(), name='mod-dashboard'),

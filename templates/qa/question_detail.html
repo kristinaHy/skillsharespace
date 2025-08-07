@@ -11,19 +11,27 @@
 {% endif %}
 
 <hr>
-<h4>Answers</h4>
-{% for answer in question.answers.all %}
-    {% if answer.approved %}
+{% for answer in answers %}
     <div class="card mb-3">
         <div class="card-body">
             <p>{{ answer.body }}</p>
             <small class="text-muted">By {{ answer.author }} on {{ answer.created_at|date:"M d, Y H:i" }}</small>
+
+            {% if user == answer.author %}
+                <div class="mt-2">
+                    <a href="{% url 'answer-update' answer.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'answer-delete' answer.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    {% if not answer.approved %}
+                        <span class="badge bg-warning text-dark">Pending Approval</span>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
 {% empty %}
     <p>No answers yet.</p>
 {% endfor %}
+
 
 {% if user.is_authenticated %}
     <hr>

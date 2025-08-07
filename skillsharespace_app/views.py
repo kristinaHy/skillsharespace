@@ -19,16 +19,16 @@ class QuestionListView(ListView):
         query = self.request.GET.get('q')
         user = self.request.user
 
-        # Base queryset
+
         if user.is_authenticated:
             if user.is_staff:
-                # Moderator sees all questions
+
                 qs = Question.objects.all()
             else:
-                # Regular user sees approved questions + their own questions
+
                 qs = Question.objects.filter(Q(approved=True) | Q(author=user))
         else:
-            # Anonymous user sees only approved questions
+
             qs = Question.objects.filter(approved=True)
 
         if query:
@@ -49,23 +49,30 @@ class QuestionDetailView(DetailView):
         obj = super().get_object(queryset)
         user = self.request.user
 
-        # Moderators can view all
+
         if user.is_authenticated and user.is_staff:
             return obj
 
-        # Author can view their own unapproved question
+
         if obj.approved or (user.is_authenticated and obj.author == user):
             return obj
 
-        # Otherwise, raise 404
+
+        if user.is_authenticated:
+            from .models import Answer
+            if Answer.objects.filter(question=obj, author=user).exists():
+                return obj
+
+
         raise Http404("This question is not approved.")
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         question = self.object
         user = self.request.user
 
-        # Filter answers similarly
+
         if user.is_authenticated and user.is_staff:
             answers = question.answers.all()
         elif user.is_authenticated:
@@ -236,6 +243,7 @@ class UnapproveAnswerView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('mod-dashboard')
 
+from django.http import Http404
 
 class AnswerUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Answer
@@ -243,18 +251,37 @@ class AnswerUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     template_name = 'qa/answer_form.html'
 
     def test_func(self):
-        return self.request.user.is_staff or self.get_object().author == self.request.user
+        answer = self.get_object()
+        user = self.request.user
+
+        return user.is_staff or answer.author == user
+
+    def get_success_url(self):
+        question = self.get_object().question
+        user = self.request.user
+
+
+        if question.approved or (user.is_authenticated and (user.is_staff or question.author == user)):
+            return reverse_lazy('question-detail', kwargs={'pk': question.pk})
+        else:
+
+            return reverse_lazy('question-list')
 
 
 class AnswerDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Answer
     template_name = 'qa/answer_confirm_delete.html'
-    success_url = reverse_lazy('mod-dashboard')
+    success_url = reverse_lazy('question-list')  # You can change this to redirect to the question page
 
     def test_func(self):
-        return self.request.user.is_staff or self.get_object().author == self.request.user
+        answer = self.get_object()
+        return self.request.user == answer.author or self.request.user.is_staff
 
-# views.py
+    def handle_no_permission(self):
+        raise Http404("You are not allowed to delete this answer.")
+
+
+
 
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
@@ -273,7 +300,7 @@ class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateVi
         context['unresolved_flags'] = Flag.objects.filter(resolved=False)
         return context
 
-# views.py (continued)
+
 
 from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
