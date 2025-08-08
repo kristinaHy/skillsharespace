@@ -29,34 +29,38 @@ It supports user roles, content approval, flagging, and a simple moderation dash
 ---
 
 ## 📸 Screenshots
+## 📸 Screenshots
 
 ### Home Page 
-[Home Page](SS_images/homepage.jpg)
+![Home Page](SS_images/homepage.jpg)
 
-Not logged in users view:
-(SS_images/notloggedin.jpg)
+### Not logged in users view
+![Not logged in](SS_images/notloggedin.jpg)
 
-login/signup page:
-(SS_images/login_page.jpg)
-(SS_images/signup_page.jpg)
+### Login Page
+![Login Page](SS_images/login_page.jpg)
+
+### Signup Page
+![Signup Page](SS_images/signup_page.jpg)
 
 ### Moderator Dashboard
 ![Moderator Dashboard](SS_images/moderator_dashboard.jpg)
-(SS_images/moderator_firstpage.jpg)
-(SS_images/approveqn.jpg)
-(SS_images/unapprove.jpg)
-(SS_images/editm.jpg)
-(SS_images/delete.jpg)
+![Moderator First Page](SS_images/moderator_firstpage.jpg)
+![Approve Question](SS_images/approveqn.jpg)
+![Unapproved Posts](SS_images/unapprove.jpg)
+![Edit Moderation](SS_images/editm.jpg)
+![Delete Moderation](SS_images/delete.jpg)
 
-### Login Users View
-!(SS_images/loggedin_user.jpg)
-(SS_images/ask_qn.jpg)
-(SS_images/new_ans.jpg)
-(SS_images/user_qn_ans_view.jpg)
-(SS_images/search.jpg)
-(SS_images/edit.jpg)
-(SS_images/deleteqn.jpg)
-(SS_images/deleteans.jpg)
+### Logged-in User View
+![Logged-in User](SS_images/loggedin_user.jpg)
+![Ask Question](SS_images/ask_qn.jpg)
+![New Answer](SS_images/new_ans.jpg)
+![User Q&A View](SS_images/user_qn_ans_view.jpg)
+![Search](SS_images/search.jpg)
+![Edit](SS_images/edit.jpg)
+![Delete Question](SS_images/deleteqn.jpg)
+![Delete Answer](SS_images/deleteans.jpg)
+
 
 ---
 
