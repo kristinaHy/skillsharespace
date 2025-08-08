@@ -1,0 +1,22 @@
+{% extends 'qa/base.html' %}
+
+{% block title %}Flag this {{ content_type }}{% endblock %}
+
+{% block content %}
+<h2>Flag this {{ content_type }}</h2>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="btn btn-danger">Submit Flag</button>
+    <a href="{% if content_type == 'question' %}
+            {% url 'question-detail' object_id %}
+            {% else %}
+            {% if flagged_object %}{% url 'question-detail' flagged_object.question.pk %}{% else %}#{% endif %}
+            {% endif %}" class="btn btn-secondary">Cancel
+    </a>
+
+
+</form>
+{% endblock %}

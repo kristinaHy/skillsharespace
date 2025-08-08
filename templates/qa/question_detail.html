@@ -4,10 +4,14 @@
 <h2>{{ question.title }}</h2>
 <p class="text-muted">Asked by {{ question.author }} on {{ question.created_at|date:"M d, Y H:i" }} • {{ question.views }} views</p>
 <p>{{ question.body }}</p>
+{% if question.approved and user.is_authenticated and user != question.author %}
+    <a href="{% url 'flag-create' 'question' question.pk %}" class="btn btn-warning btn-sm">Flag Question</a>
+{% endif %}
 
 {% if user == question.author %}
     <a href="{% url 'question-update' question.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
     <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+    
 {% endif %}
 
 <hr>
@@ -16,11 +20,16 @@
         <div class="card-body">
             <p>{{ answer.body }}</p>
             <small class="text-muted">By {{ answer.author }} on {{ answer.created_at|date:"M d, Y H:i" }}</small>
+  
+            {% if answer.approved and user.is_authenticated and user != answer.author %}
+                <a href="{% url 'flag-create' 'answer' answer.pk %}" class="btn btn-warning btn-sm">Flag Answer</a>
+            {% endif %}
 
             {% if user == answer.author %}
                 <div class="mt-2">
                     <a href="{% url 'answer-update' answer.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                     <a href="{% url 'answer-delete' answer.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    
                     {% if not answer.approved %}
                         <span class="badge bg-warning text-dark">Pending Approval</span>
                     {% endif %}

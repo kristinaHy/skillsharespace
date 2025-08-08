@@ -37,7 +37,7 @@ class QuestionListView(ListView):
         return qs.order_by('-created_at')
 
 from django.db.models import Q
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 from .models import Question
 
 class QuestionDetailView(DetailView):
@@ -128,7 +128,7 @@ class AnswerCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.question_id = self.kwargs['pk']
-        form.instance.approved = False  # mark unapproved initially
+        form.instance.approved = False  
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -177,7 +177,7 @@ from .models import Question
 
 class ApproveQuestionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Question
-    fields = []  # No form fields, just updating approved status
+    fields = []  
     template_name = 'moderator/approve_confirm.html'
 
     def test_func(self):
@@ -271,7 +271,7 @@ class AnswerUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class AnswerDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Answer
     template_name = 'qa/answer_confirm_delete.html'
-    success_url = reverse_lazy('question-list')  # You can change this to redirect to the question page
+    success_url = reverse_lazy('question-list') 
 
     def test_func(self):
         answer = self.get_object()
@@ -329,4 +329,76 @@ class UnapprovedAnswerListView(LoginRequiredMixin, UserPassesTestMixin, ListView
 
     def get_queryset(self):
         return Answer.objects.filter(approved=False).order_by('-created_at')
+
+from django.views.generic import CreateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from .models import Flag, Question, Answer
+from .forms import FlagForm
+
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404
+
+class FlagCreateView(LoginRequiredMixin, CreateView):
+    model = Flag
+    form_class = FlagForm
+    template_name = 'qa/flag_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.content_type = self.kwargs.get('content_type')
+        self.object_id = self.kwargs.get('object_id')
+        content_type_obj = get_object_or_404(ContentType, model=self.content_type)
+        self.object_to_flag = content_type_obj.get_object_for_this_type(id=self.object_id)
+
+
+        if self.object_to_flag.author == request.user:
+            return HttpResponseForbidden("You cannot flag your own content.")
+
+
+        if hasattr(self.object_to_flag, 'approved') and not self.object_to_flag.approved:
+            return HttpResponseForbidden("You cannot flag unapproved content.")
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['content_type'] = self.content_type
+        context['object_id'] = self.object_id
+        context['flagged_object'] = self.object_to_flag
+        return context
+
+    def form_valid(self, form):
+        form.instance.content_object = self.object_to_flag
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        if self.content_type == 'question':
+            return reverse_lazy('question-detail', kwargs={'pk': self.object_id})
+        else:
+
+            return reverse_lazy('question-detail', kwargs={'pk': self.object_to_flag.question.pk})
+
+
+
+class ModeratorFlagListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Flag
+    template_name = 'qa/mod_dashboard.html'
+    context_object_name = 'flags'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        return Flag.objects.filter(resolved=False).order_by('-created_at')
+
+
+def resolve_flag(request, flag_id):
+    if not request.user.is_staff:
+        return redirect('question-list')
+    flag = get_object_or_404(Flag, pk=flag_id)
+    flag.resolved = True
+    flag.save()
+    return redirect('mod-dashboard')
 
