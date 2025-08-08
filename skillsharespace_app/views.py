@@ -3,12 +3,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from .models import Question, Answer, Flag
-from .forms import QuestionForm, AnswerForm
+from .forms import QuestionForm, AnswerForm,FlagForm
 from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
+from django.http import Http404, HttpResponseForbidden
+from django.views.generic import TemplateView
+from django.views.generic import CreateView, ListView
+from django.contrib.contenttypes.models import ContentType
 
 
-from django.db.models import Q
 
 class QuestionListView(ListView):
     model = Question
@@ -35,10 +38,6 @@ class QuestionListView(ListView):
             qs = qs.filter(Q(title__icontains=query) | Q(body__icontains=query))
 
         return qs.order_by('-created_at')
-
-from django.db.models import Q
-from django.http import Http404, HttpResponseForbidden
-from .models import Question
 
 class QuestionDetailView(DetailView):
     model = Question
@@ -280,13 +279,6 @@ class AnswerDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def handle_no_permission(self):
         raise Http404("You are not allowed to delete this answer.")
 
-
-
-
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-from .models import Question, Answer, Flag
-
 class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'moderator/dashboard.html'
 
@@ -299,13 +291,6 @@ class ModeratorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateVi
         context['unapproved_answers'] = Answer.objects.filter(approved=False)
         context['unresolved_flags'] = Flag.objects.filter(resolved=False)
         return context
-
-
-
-from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Question, Answer
-
 
 class UnapprovedQuestionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Question
@@ -330,15 +315,6 @@ class UnapprovedAnswerListView(LoginRequiredMixin, UserPassesTestMixin, ListView
     def get_queryset(self):
         return Answer.objects.filter(approved=False).order_by('-created_at')
 
-from django.views.generic import CreateView, ListView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
-from .models import Flag, Question, Answer
-from .forms import FlagForm
-
-from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import get_object_or_404
 
 class FlagCreateView(LoginRequiredMixin, CreateView):
     model = Flag
