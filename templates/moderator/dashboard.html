@@ -19,7 +19,6 @@
             <a href="{% url 'unapprove-question' question.pk %}" class="btn btn-sm btn-warning">Unapprove</a>
             <a href="{% url 'moderator-question-edit' question.pk %}" class="btn btn-sm btn-primary">Edit</a>
             <a href="{% url 'question-delete' question.pk %}" class="btn btn-sm btn-danger">Delete</a>
-            
         </div>
     </li>
     {% empty %}
@@ -28,7 +27,7 @@
 </ul>
 
 <h3>Unapproved Answers</h3>
-<ul class="list-group">
+<ul class="list-group mb-4">
     {% for answer in unapproved_answers %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
         <div>
@@ -40,12 +39,35 @@
             <a href="{% url 'approve-answer' answer.pk %}" class="btn btn-sm btn-success">Approve</a>
             <a href="{% url 'unapprove-answer' answer.pk %}" class="btn btn-sm btn-warning">Unapprove</a>
             <a href="{% url 'moderator-answer-edit' answer.pk %}" class="btn btn-sm btn-primary">Edit</a>
-            
             <a href="{% url 'moderator-answer-delete' answer.pk %}" class="btn btn-sm btn-danger">Delete</a>
         </div>
     </li>
     {% empty %}
     <li class="list-group-item">No unapproved answers.</li>
+    {% endfor %}
+</ul>
+
+<h3>Unresolved Flags</h3>
+<ul class="list-group">
+    {% for flag in unresolved_flags %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            Flagged: {{ flag.content_object }}<br>
+            Reason: {{ flag.reason }}<br>
+            <small>Flagged at {{ flag.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+        <div>
+            {% if flag.content_type.model == "question" %}
+                <a href="{% url 'question-detail' flag.object_id %}" class="btn btn-sm btn-info">View Question</a>
+            {% elif flag.content_type.model == "answer" %}
+                <a href="{% url 'question-detail' flag.content_object.question.pk %}" class="btn btn-sm btn-info">View Related Question</a>
+            {% endif %}
+            <a href="{% url 'resolve-flag' flag.id %}" class="btn btn-sm btn-success">Resolve Flag</a>
+            <a href="{% url 'dismiss-flag' flag.id %}"class="btn btn-sm btn-warning">Dismiss</a>
+        </div>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No unresolved flags.</li>
     {% endfor %}
 </ul>
 

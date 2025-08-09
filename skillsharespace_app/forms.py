@@ -11,10 +11,11 @@ class AnswerForm(forms.ModelForm):
         model = Answer
         fields = ['body']
 
+
 class FlagForm(forms.ModelForm):
     class Meta:
         model = Flag
         fields = ['reason']
         widgets = {
-            'reason': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Explain why you are flagging this content...'}),
+            'reason': forms.Textarea(attrs={'rows': 4}),
         }
